@@ -92,7 +92,7 @@ for f in frames:
 PY
 ```
 
-For a full turn-by-turn game-state collector (drives a lobby, plays vs an AI, saves a JSON time-series + screenshots), see [`examples/game-state-collector.sh`](./examples/game-state-collector.sh).
+For a full turn-by-turn game-state collector (drives a lobby, plays vs an AI, saves a JSON time-series + screenshots), see [`examples/game-state-collector.sh`](./examples/game-state-collector.sh). For a **headless E2E test harness** that also *asserts* functionality from the live state (game starts, resources/armies correct, day advances, income accrues, AI acts, combat engages) and returns `PASS`/`FAIL` + exit code, see [`examples/game-e2e.sh`](./examples/game-e2e.sh) — shape-tolerant, verified green on two different canvas+PartyKit games. This is browser-use as a grounded, headless E2E test for your dev loop: it exercises the real client (render + WS + server), so it fails when the *UI* breaks, not just the protocol.
 
 ---
 

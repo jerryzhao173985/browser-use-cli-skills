@@ -28,7 +28,7 @@ This repo keeps that knowledge **minimal and first-principles** — verified aga
 | [`scripts/install.sh`](./scripts/install.sh) | Copy the skill into an agent's skills dir | first time / after edits |
 | [`scripts/check-update.sh`](./scripts/check-update.sh) | Detect when the CLI's surface changed | periodically |
 | [`helpers.snapshot.txt`](./helpers.snapshot.txt) | Recorded helper surface + versions | diff baseline |
-| [`examples/`](./examples/) | Runnable examples (e.g. a WebSocket game-state collector) | adapting to a real task |
+| [`examples/`](./examples/) | Runnable examples: a WebSocket game-state collector + a headless E2E test harness (assert functionality from live state) | adapting to a real task |
 
 ## Install
 
