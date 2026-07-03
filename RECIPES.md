@@ -110,7 +110,9 @@ click_at_xy(*px(dest_x, dest_y))     # move; re-read cr, then verify the move la
 PY
 ```
 
-Tip: in a dev build, expose the camera on `window` (`window.__cam = camera`) so tests convert tiles→pixels exactly — a tiny, test-only hook that makes canvas automation deterministic.
+**Move semantics vary** (verified live on heros3): some games move on one click; others **preview on the first click and move on the second** — double-click the same pixel. And destinations must be **reachable** — click an empty tile *toward* a guarded objective, not the objective's own tile (a guarded mine won't accept a move onto it). Always confirm the result via the WS state, not the click.
+
+Tip: in a dev build, expose the camera on `window` (`window.__cam = camera`) so tests convert tiles→pixels exactly — a tiny, test-only hook that makes canvas automation deterministic. heros3 does exactly this (`window.__h3cam`).
 
 ---
 
