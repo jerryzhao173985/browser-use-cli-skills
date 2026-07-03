@@ -47,6 +47,10 @@ def click_el(text, w=0.8):     # any leaf element by exact text (faction is a bu
 	return r
 def set_input(sel, val):
 	js("(function(){var i=document.querySelector(%r);if(!i)return;var d=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value');d.set.call(i,%r);i.dispatchEvent(new Event('input',{bubbles:true}));})()" % (sel, val))
+def set_faction(fac, w=0.8):   # homm3 uses a <select>, heros3 a <button>: try the select, else click the element
+	hit = js("(function(){var ss=document.querySelectorAll('select');for(var i=0;i<ss.length;i++){var s=ss[i];for(var j=0;j<s.options.length;j++){if(new RegExp(%r,'i').test(s.options[j].text||s.options[j].value)){var d=Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype,'value');d.set.call(s,s.options[j].value);s.dispatchEvent(new Event('change',{bubbles:true}));return 'select';}}}return null;})()" % fac)
+	if hit: wait(w); return hit
+	return click_el(fac, w)
 
 # --- WS state capture (handles both {type:'state'} and {type:'gameStarted'} frames) ---
 def states_from(evs):
@@ -86,7 +90,7 @@ goto_url(URL); wait_for_load(); wait(1.5)
 set_input(NAME_SEL, "E2E")
 click_btn("create room", 2.5)
 click_btn(ADD_AI, 1.5)
-click_el(FACTION, 0.8)
+set_faction(FACTION)
 click_btn(READY, 1.2)
 click_btn(START, 3.5)
 
