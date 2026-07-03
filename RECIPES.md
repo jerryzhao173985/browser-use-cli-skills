@@ -96,6 +96,24 @@ For a full turn-by-turn game-state collector (drives a lobby, plays vs an AI, sa
 
 ---
 
+### 8. Drive a canvas game — coordinate moves
+
+Canvas games take **clicks, not DOM events**. Invert the renderer's own click→tile transform (read it from source — e.g. `tile = floor((clientX − rect.left + camera) / TILE)`), then click the pixel. **Re-read the transform after every move** — the camera usually re-centers, shifting it.
+
+```bash
+browser-use <<'PY'
+T = 64   # tile px, from the renderer
+cr = js("(function(){var c=document.querySelector('canvas');var b=c.getBoundingClientRect();return{left:b.left,top:b.top,cam:window.__cam};})()")
+def px(tx, ty): return (cr["left"] + tx*T + T/2 - cr["cam"]["x"], cr["top"] + ty*T + T/2 - cr["cam"]["y"])
+click_at_xy(*px(hero_x, hero_y))     # select the unit
+click_at_xy(*px(dest_x, dest_y))     # move; re-read cr, then verify the move landed via the WS state
+PY
+```
+
+Tip: in a dev build, expose the camera on `window` (`window.__cam = camera`) so tests convert tiles→pixels exactly — a tiny, test-only hook that makes canvas automation deterministic.
+
+---
+
 ### Working in your real, logged-in session
 
 Connect to your everyday Chrome (see [SKILL.md → Connect](./SKILL.md#connect)) instead of a throwaway profile, and the CLI acts with your existing cookies/logins — read a page behind SSO, export a signed-in dashboard to PDF, etc. **Stop at password/MFA/consent screens and hand back to the human.**
