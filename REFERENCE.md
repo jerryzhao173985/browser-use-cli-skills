@@ -138,6 +138,49 @@ Every callable below is injected into the heredoc namespace. Signatures verbatim
 
 ---
 
+## 3.5 Full-potential capabilities (beyond the 37-helper floor)
+
+The 37 helpers are the *verified floor*. These grounded capabilities unlock the "SOTA / fewer tokens / any target" potential and are mostly absent from the CLI's own `--help`.
+
+### Extend the harness at runtime — `agent_helpers.py` (the compounding loop)
+Every run, `helpers.py:493-508` calls `_load_agent_helpers()`: it loads `$BH_AGENT_WORKSPACE/agent_helpers.py` and injects all its public names into your heredoc namespace. It's **empty by default** — so the move that makes the tool improve over time: when a primitive is missing, **write it once**, and it's callable (import-free) on every future run.
+```python
+open(f"{AGENT_WORKSPACE}/agent_helpers.py", "a").write('''
+def login(app):
+    new_tab(app + "/login"); fill_input("#user", os.environ["U"]); ...
+''')
+# any later heredoc — already in scope, no import:
+login("https://app.example.com")
+```
+Persistent per machine (`~/.config/browser-harness/agent-workspace/`). `$BH_AGENT_WORKSPACE/.env` is auto-loaded (`helpers.py:20`) — a clean secrets channel. So "37/37 verified" is the floor; this is the ceiling: **verified core + agent-authored extensions.**
+
+### Domain skills — field-tested per-site playbooks
+Upstream ships a **97-site library** of per-host playbooks (exact selectors, extraction JS, named traps) at `github.com/browser-use/browser-harness/tree/main/agent-workspace/domain-skills` (amazon, linkedin, github, reddit, youtube, gmail, x, arxiv, bilibili, …) — **NOT bundled**; your local `domain-skills/` is empty until seeded. Before automating a covered site, pull its folder:
+```bash
+gh api repos/browser-use/browser-harness/contents/agent-workspace/domain-skills/amazon --jq '.[].download_url'
+# save the .md files under $BH_AGENT_WORKSPACE/domain-skills/amazon/
+```
+With `BH_DOMAIN_SKILLS=1`, `goto_url(url)` returns up to 10 matching local skill filenames for the host (`helpers.py:132-135`) — read them before inventing an approach. Collapses "reverse-engineer the DOM" into a read.
+
+### Browserless power fetch — the full `fetch_use` client
+`http_get` only calls `fetch_sync(url).text` (`helpers.py:473-486`). Inside a heredoc you have the whole client (gated on `BROWSER_USE_API_KEY`; routes through the fetch-use residential-proxy + bot-detection layer):
+```python
+from fetch_use import fetch_sync, RetryConfig
+r = fetch_sync("https://api.site.com/x", method="POST", json_body={"q": 1},
+               proxy_country="US", session_id="sticky-1", retry=RetryConfig(count=3))
+r.text; r.json(); r.content; r.ok             # .content for binaries; also .raise_for_status()
+```
+No render, minimal tokens — a large share of scraping/API work needs no browser at all.
+
+### Cloud vs local — an evasion ladder, not just a connection mode
+- **Default: local real-Chrome attach.** Most *legitimate* fingerprint (Chrome talking to itself), free, reuses the user's logged-in session. Use unless the target fights you.
+- **Escalate to cloud** (`start_remote_daemon(...)`) only for **hostile / geo-locked / bot-protected** targets: hardened stealth fingerprint (passes CreepJS), residential proxy by `proxyCountryCode` / `customProxy` (195+ countries), Cloudflare/DataDome/PerimeterX bypass, captcha solving, auto cookie-banner dismiss, and horizontal scale — zero config. (Patched-Playwright stealth is detectable in <50 ms; this is a real edge.)
+
+### Cloud human-in-the-loop — the `liveUrl`
+`start_remote_daemon` returns a `liveUrl` and auto-opens it on a GUI, else prints "share the liveUrl" (`admin.py:481-493`). A human opens it, completes SSO / MFA / CAPTCHA in the *shared* cloud browser; because the `BU_NAME` daemon is long-lived, your next heredoc continues authenticated — the cloud realization of "stop at login walls, hand back to the human." Embeddable via `live.browser-use.com` (`theme`, `ui=false`).
+
+---
+
 ## 4. Connection & browser modes
 
 Selection happens in `daemon.py:get_ws_url()`, precedence top-down. Mode is "local" iff **neither** `BU_CDP_WS` nor `BU_CDP_URL` is set (checked in both the passed env and `os.environ`).

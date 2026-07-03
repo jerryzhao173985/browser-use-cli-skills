@@ -116,6 +116,25 @@ Tip: in a dev build, expose the camera on `window` (`window.__cam = camera`) so 
 
 ---
 
+### 9. Autonomous login incl. 2FA (TOTP), secrets via env
+
+Pass secrets through the environment and read them **inside** the quoted heredoc — never inline them (shell history + telemetry paths). Since the CLI `exec`s arbitrary Python, `pyotp` gives fully-autonomous 2FA (no human, no cloud product):
+
+```bash
+U=me@x.com PW="$PASS" TOTP_SECRET="$BASE32_SECRET" browser-use <<'PY'
+import os, pyotp
+new_tab("https://app.example.com/login"); wait_for_element("#user")
+fill_input("#user", os.environ["U"]); fill_input("#pass", os.environ["PW"])
+# submit, then the 2FA step:
+wait_for_element("#otp"); fill_input("#otp", pyotp.TOTP(os.environ["TOTP_SECRET"]).now())
+# submit; verify via page_info() / the app's state
+PY
+```
+
+Use the **base32 secret** (from the authenticator "enter key manually" screen), not a one-time 6-digit code. For sensitive runs: `browser-use telemetry disable`. To reuse the login across runs, wrap it as a helper in `agent_helpers.py` (REFERENCE §3.5).
+
+---
+
 ### Working in your real, logged-in session
 
 Connect to your everyday Chrome (see [SKILL.md → Connect](./SKILL.md#connect)) instead of a throwaway profile, and the CLI acts with your existing cookies/logins — read a page behind SSO, export a signed-in dashboard to PDF, etc. **Stop at password/MFA/consent screens and hand back to the human.**

@@ -104,6 +104,15 @@ html = http_get("https://api.site.com/data")   # for static pages / APIs
 
 ---
 
+## Beyond the basics (full potential)
+
+- **Extend the harness.** Missing a primitive? Write it into `$BH_AGENT_WORKSPACE/agent_helpers.py` once — it's auto-injected (import-free) on every future run. This is how the tool *compounds*. (REFERENCE §3.5)
+- **Domain skills.** For a known site, pull its playbook from the upstream **97-site library** first (`gh api …/domain-skills/<site>`); `BH_DOMAIN_SKILLS=1` surfaces local ones via `goto_url`.
+- **Browserless + anti-bot.** `from fetch_use import fetch_sync` → POST / `json_body` / `proxy_country` / `session_id` / `.content` — no render, fewer tokens (needs `BROWSER_USE_API_KEY`). `http_get` is just its `.text`.
+- **Cloud vs local.** Default **local attach** (legit fingerprint, free, your logged-in session); escalate to **cloud** only for bot-protected / geo-locked targets (stealth + residential proxy + Cloudflare/DataDome bypass + captcha).
+- **Secrets.** Pass creds via env, read `os.environ[...]` **inside** the quoted heredoc (never inline — shell history/telemetry). Autonomous 2FA: `import pyotp; pyotp.TOTP(os.environ["TOTP_SECRET"]).now()`. `browser-use telemetry disable` for sensitive runs.
+- **Cloud login handoff.** `start_remote_daemon` returns a `liveUrl` — share it so a human does SSO/MFA/CAPTCHA; the daemon stays authenticated for your next call.
+
 ## Depth
 
 Full signatures, connection-mode precedence, the env-var table, and every interaction recipe → [`REFERENCE.md`](./REFERENCE.md).

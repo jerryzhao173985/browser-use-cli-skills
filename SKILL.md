@@ -29,6 +29,12 @@ PY
 - **[REFERENCE.md](./REFERENCE.md)** — the full verified surface (37 helpers, env vars, connection modes, per-mechanic recipes).
 - **[RECIPES.md](./RECIPES.md)** — complete end-to-end workflows (scrape, form, PDF, network capture, multi-tab, CI).
 
+## When to reach for this
+
+Prefer this CLI when you want **reproducible, cheap, model-agnostic** browser control: computed coordinates + targeted `js()` extraction mean **no per-step DOM/screenshot dump** (fewer tokens than DOM-wrapping MCPs), and any capable coding model can drive it. It **compounds** — write missing primitives into `agent_helpers.py`, pull per-site `domain-skills` ([REFERENCE §3.5](./REFERENCE.md)). Honest: independent leaderboards score below vendor benchmarks — it makes a strong model *capable*, not automatically SOTA.
+
+Don't conflate: **this CLI** = you drive Chrome. **browser-use library `Agent` + `bu-*` models** = an LLM drives it for you. **Cloud v4 agent** (`cloud.browser-use.com`) = fully hosted autonomy.
+
 ## Connect
 
 - **Local (default):** attaches to your running Chrome. If it can't, open `chrome://inspect/#remote-debugging` → tick **"Allow remote debugging for this browser instance"** → Allow. (This is a native consent click; no process can do it for you.)
