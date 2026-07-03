@@ -1,0 +1,47 @@
+[
+  {
+    "day": 2,
+    "gold": [
+      [
+        "red",
+        15500
+      ],
+      [
+        "blue",
+        15160
+      ]
+    ],
+    "battle": false,
+    "winner": null
+  },
+  {
+    "day": 3,
+    "gold": [
+      [
+        "red",
+        16000
+      ],
+      [
+        "blue",
+        14660
+      ]
+    ],
+    "battle": false,
+    "winner": null
+  },
+  {
+    "day": 3,
+    "gold": [
+      [
+        "red",
+        16000
+      ],
+      [
+        "blue",
+        11820
+      ]
+    ],
+    "battle": true,
+    "winner": null
+  }
+]

@@ -14,7 +14,7 @@ new_tab("https://example.com")      # FIRST navigation is new_tab, not goto_url
 print(page_info())
 PY
 ```
-- Quote the heredoc marker `<<'PY'` so the shell doesn't touch your Python.
+- Quote the heredoc marker `<<'PY'` so the shell doesn't touch your Python. Essential for JS-heavy code (regexes, `$`, backticks): use `<<'PY'` and pass file paths via env vars read with `os.environ` inside — an unquoted heredoc mangles backslashes/`$` in your JS.
 - ⚠︎ `-c/--code` does **not** run code (telemetry only). Always use the heredoc.
 - Aliases: `bu`, `browser`, `browseruse`. Ephemeral: `uvx browser-use <<'PY' …`.
 
@@ -73,7 +73,7 @@ tid = new_tab("https://a.com"); list_tabs(include_chrome=False); switch_tab(tid)
 **Raw CDP / generate artifacts**
 ```python
 open("/tmp/p.pdf","wb").write(base64.b64decode(cdp("Page.printToPDF", printBackground=True)["data"]))  # base64/json pre-injected
-cdp("Network.enable"); ...; [e for e in drain_events() if e["method"]=="Network.requestWillBeSent"]
+cdp("Network.enable"); ...; [e for e in drain_events() if e["method"]=="Network.requestWillBeSent"]  # HTTP; use "Network.webSocketFrameReceived" for WS frames (realtime/game state)
 cdp("Network.getCookies")["cookies"]
 cdp("Emulation.setDeviceMetricsOverride", width=390, height=844, deviceScaleFactor=3, mobile=True)
 ```
@@ -89,7 +89,7 @@ html = http_get("https://api.site.com/data")   # for static pages / APIs
 
 - **Coordinate-click for interaction; `js` for reading.** Don't fight the DOM to click — screenshot and click the pixel.
 - **Always verify.** Read `page_info()`/DOM/server echo after acting. SPA submits can succeed with *no* DOM change → use `wait_for_network_idle`.
-- **Text entry: single-call > char-by-char.** Use `js` value-set (bulk) or `type_text` (one `Input.insertText`). Reserve `fill_input` (types char-by-char, N CDP round-trips → framework-safe) for React/Vue/Ember controlled inputs on **responsive** pages. On slow/remote pages, char-by-char can stall and wedge the CDP channel.
+- **Text entry: single-call; avoid `fill_input`.** Use `js` value-set (bulk) or `type_text` (one `Input.insertText`). For React/Vue controlled inputs, one `js` call with the native setter: `Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,val); el.dispatchEvent(new Event('input',{bubbles:true}))`. `fill_input` types char-by-char (N `Input` events) and can **wedge or crash headless Chrome** — last resort only.
 - **`new_tab` to start, `goto_url` to navigate an already-attached tab.** If the tab looks internal/stale, `ensure_real_tab()`.
 - **Reach for `cdp(...)` freely** — PDF, network, cookies, emulation, downloads all live there; helpers only cover the common 20%.
 - **Cloud/remote:** `browser-use auth login` → `start_remote_daemon("work")` → run with `BU_NAME=work` → `stop_remote_daemon("work")`. Unique `BU_NAME` per parallel agent; **billing runs until stop/timeout** — stop when done.

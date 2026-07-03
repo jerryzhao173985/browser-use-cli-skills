@@ -76,6 +76,26 @@ PY
 
 ---
 
+### 7. Capture a realtime app's live state over its WebSocket
+
+Games, dashboards, chat, and trading UIs push **authoritative state over a WebSocket** — richer and more reliable than scraping the DOM (a canvas app has *no* state in the DOM). Arm `Network.enable` **before** the socket opens, then filter `drain_events()` for frames:
+
+```bash
+browser-use <<'PY'
+new_tab("about:blank"); cdp("Network.enable")          # enable BEFORE the WS connects
+goto_url("https://app.example.com"); wait_for_load(); wait(2)
+frames = [e["params"]["response"]["payloadData"] for e in drain_events()
+          if e.get("method") == "Network.webSocketFrameReceived"]     # ...FrameSent for outbound
+print("captured", len(frames), "WS frames")
+for f in frames:
+    if '"type":"state"' in f: json.dump(json.loads(f), open("/tmp/state.json", "w"))
+PY
+```
+
+For a full turn-by-turn game-state collector (drives a lobby, plays vs an AI, saves a JSON time-series + screenshots), see [`examples/game-state-collector.sh`](./examples/game-state-collector.sh).
+
+---
+
 ### Working in your real, logged-in session
 
 Connect to your everyday Chrome (see [SKILL.md → Connect](./SKILL.md#connect)) instead of a throwaway profile, and the CLI acts with your existing cookies/logins — read a page behind SSO, export a signed-in dashboard to PDF, etc. **Stop at password/MFA/consent screens and hand back to the human.**
