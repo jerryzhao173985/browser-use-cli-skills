@@ -20,7 +20,10 @@ The map is a `<canvas>` → **no game state in the DOM**. The authoritative stat
 `hero.owner` is a **color string** in homm3 (`"red"`) but a **numeric seat** in heros3 (`0`). Don't key on that. Instead: pick the player with `isAI`/`isBot` false, then find your hero via that player's `heroes` id-list:
 ```python
 me = next(p for p in st["players"] if not (p.get("isAI") or p.get("isBot")))
-my_hero = next(h for h in st["heroes"].values() if h["id"] in me["heroes"])
+hs = list(st["heroes"].values()) if isinstance(st["heroes"], dict) else st["heroes"]
+ids = me.get("heroes")                       # heros3: hero-id list on the player; homm3: absent
+def mine(h): return (h["id"] in ids) if ids else h.get("owner") in (me.get("color"), me.get("id"))
+my_hero = next(h for h in hs if mine(h))
 ```
 
 ## Connect
@@ -72,10 +75,14 @@ heros3 move transform: `screen_px = rect.left + tile*48 + 24 − __h3cam.x` (and
 ## Run
 
 ```bash
-GAME=heros3 OUT=./e2e  TURNS=6  ./game-e2e.sh   # functional gate: 11 checks, exit 0 = PASS
-GAME=homm3  OUT=./data TURNS=10 ./game-e2e.sh   # same tool, longer run for data — writes state-day*.json + series.json + screenshots
+GAME=heros3 TURNS=6 ./ci-run.sh   # self-contained: launches its own headless Chrome + tears down; exit 0 = PASS
+GAME=homm3  TURNS=6 ./ci-run.sh   # (or ./game-e2e.sh directly if a browser is already connected via BU_CDP_URL)
 ```
+
+Each run writes **`OUT/report.json`** (per-check `detail` + metrics), appends **`OUT/e2e-history.jsonl`** keyed by the game's git SHA — so `jq 'select(.result=="FAIL")' e2e-history.jsonl` shows *which scenario broke on which commit* — and drops **`OUT/FAIL-<check>.png`** on any hard failure. 15 checks: 11 invariants + `schema_contract` (fails loudly if the WS state shape drifts), `no_war_machines`, `hero_moves_on_click` (the canvas human-input path; hard on heros3, soft-skipped on homm3 until its transform is wired), `reload_reconnect` (soft). Lobby drive auto-retries 3× (timing flake), and a drift names the exact failing step.
+
+**Determinism (for replay/golden work):** *neither* game is reproducible today — both fold `Date.now()` into the seed, so every run is a fresh map. This gate is a seed-agnostic *invariant* check by design. To pin a seed, add the ~2-line server seam and run under `partykit dev --var SEED=...` (see the per-project `docs/TESTING-browser.md`).
 
 ## The minimal prompt to hand an agent (paste this together with the skill)
 
-> Test `~/heros3` end-to-end with the browser-use CLI. Start its dev server, connect a headless Chrome (`BU_CDP_URL`), then drive the real client and **assert functionality from the WebSocket state** — the DOM has no game state. Follow `examples/testing-canvas-ws-games.md`: drive menus via DOM (js native-setter / `<select>` value, never `fill_input`; coordinate-click buttons), capture state via `cdp("Network.enable")` + `drain_events()` filtered to `state`/`gameStarted` frames, identify your hero via the non-bot player's `heroes` list, and move heroes by **double-clicking reachable tiles** (per RECIPES §8). Cover the scenario matrix; run `GAME=heros3 examples/game-e2e.sh` as the gate. Report PASS/FAIL per scenario with the state evidence, and save a state time-series + screenshots.
+> Test `~/heros3` end-to-end with the browser-use CLI. Start its dev server, connect a headless Chrome (`BU_CDP_URL`), then drive the real client and **assert functionality from the WebSocket state** — the DOM has no game state. Follow `examples/testing-canvas-ws-games.md`: drive menus via DOM (js native-setter / `<select>` value, never `fill_input`; coordinate-click buttons), capture state via `cdp("Network.enable")` + `drain_events()` filtered to `state`/`gameStarted` frames, identify your hero with the schema-tolerant snippet (non-bot player; hero via its `heroes` list on heros3 or `owner`==color on homm3), and move heroes by **double-clicking reachable tiles** (per RECIPES §8). Cover the scenario matrix; run `GAME=heros3 examples/ci-run.sh` as the self-contained gate (exit 0 = PASS; it writes report.json + a commit-keyed e2e-history.jsonl and FAIL screenshots). Report PASS/FAIL per scenario with the state evidence.
